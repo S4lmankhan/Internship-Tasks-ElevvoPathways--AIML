@@ -1,0 +1,48 @@
+
+================================================================================
+TASK 2: CUSTOMER SEGMENTATION - FINAL SUMMARY
+================================================================================
+
+Dataset Overview:
+- Total Records: 200
+- Features Used: Annual Income, Spending Score
+- Optimal Clusters: 5
+- Silhouette Score: 0.5547
+
+Clustering Algorithm:
+- Method: K-Means Clustering
+- Initialization: K-Means++ (smart center initialization)
+- Distance Metric: Euclidean Distance
+- Feature Scaling: StandardScaler (normalized to mean=0, std=1)
+
+Cluster Distribution:
+Cluster
+0    81
+1    39
+2    22
+3    35
+4    23
+
+Model Performance:
+- Inertia (Final): 65.57
+- Number of Iterations: 4
+
+Outputs Generated:
+- distributions.png (feature distributions)
+- correlation.png (feature correlations)
+- elbow_method.png (optimal k determination)
+- silhouette_analysis.png (cluster quality scores)
+- cluster_visualization.png (2D cluster plot)
+- cluster_profiles.png (box plots by cluster)
+- kmeans_model.pkl (trained model)
+- scaler.pkl (feature scaler)
+
+Cluster Centers (Original Scale):
+   Annual Income (k$)  Spending Score (1-100)
+0           55.296296               49.518519
+1           86.538462               82.128205
+2           25.727273               79.363636
+3           88.200000               17.114286
+4           26.304348               20.913043
+
+================================================================================

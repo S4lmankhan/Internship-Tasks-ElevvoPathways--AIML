@@ -1,0 +1,35 @@
+
+================================================================================
+TASK 1: STUDENT PERFORMANCE PREDICTION - FINAL SUMMARY
+================================================================================
+
+Dataset Overview:
+- Total Records: 10000
+- Training Samples: 8000
+- Testing Samples: 2000
+- Features Used: 5
+- Target Variable: Performance Index
+
+Model Performance:
+- Training R² Score: 0.9887
+- Testing R² Score: 0.9890
+- Training RMSE: 2.0420
+- Testing RMSE: 2.0206
+- Training MAE: 1.6193
+- Testing MAE: 1.6111
+
+Key Features by Importance:
+1. Previous Scores: 17.6373
+2. Hours Studied: 7.4013
+3. Sleep Hours: 0.8100
+
+Outputs Generated:
+- distribution.png
+- correlation.png
+- actual_vs_predicted.png
+- feature_importance.png
+- residuals.png
+- linear_model.pkl (saved model)
+- scaler.pkl (saved scaler)
+
+================================================================================

@@ -1,0 +1,26 @@
+Age,Income,Credit_Score,Employment_Years,Loan_Amount,Gender,Married,Dependents,Education,Self_Employed,Approval
+35,50000,720,5,100000,M,Yes,1,Graduate,No,Approved
+45,120000,800,15,300000,F,Yes,2,Graduate,No,Approved
+28,35000,650,2,50000,M,No,0,Not Graduate,Yes,Rejected
+52,90000,750,20,200000,F,Yes,3,Graduate,No,Approved
+31,65000,700,7,150000,M,Yes,1,Graduate,No,Approved
+42,110000,780,12,250000,M,Yes,2,Graduate,No,Approved
+26,45000,620,1,80000,F,No,0,Not Graduate,Yes,Rejected
+38,75000,740,8,180000,F,Yes,2,Graduate,No,Approved
+48,130000,810,18,350000,M,Yes,3,Graduate,No,Approved
+29,40000,680,3,70000,M,No,1,Not Graduate,Yes,Rejected
+55,145000,820,25,400000,F,Yes,2,Graduate,No,Approved
+32,60000,710,6,120000,M,Yes,1,Graduate,No,Approved
+44,100000,770,14,220000,F,Yes,2,Graduate,No,Approved
+27,50000,650,2,95000,M,No,0,Not Graduate,No,Rejected
+51,125000,800,22,320000,M,Yes,3,Graduate,No,Approved
+30,55000,700,4,110000,F,Yes,1,Graduate,No,Approved
+39,85000,750,10,190000,F,Yes,2,Graduate,No,Approved
+46,115000,790,16,280000,M,Yes,2,Graduate,No,Approved
+25,38000,630,0,60000,M,No,0,Not Graduate,Yes,Rejected
+43,95000,760,13,210000,F,Yes,1,Graduate,No,Approved
+36,70000,730,7,160000,M,Yes,2,Graduate,No,Approved
+49,135000,815,19,360000,F,Yes,3,Graduate,No,Approved
+33,62000,715,5,125000,M,Yes,1,Graduate,No,Approved
+41,92000,765,12,200000,F,Yes,2,Graduate,No,Approved
+28,42000,660,1,75000,M,No,0,Not Graduate,Yes,Rejected
