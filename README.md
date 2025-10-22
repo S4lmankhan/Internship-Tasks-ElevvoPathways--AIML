@@ -8,10 +8,10 @@ Complete machine learning project portfolio featuring **4 production-ready ML ap
 
 | Task | Application | Status | Link |
 |------|------------|--------|------|
-| **Task 1** | Student Score Prediction | ✅ Live | [Predict Scores](https://your-task1-app.streamlit.app) |
-| **Task 2** | Customer Segmentation | ✅ Live | [Segment Customers](https://your-task2-app.streamlit.app) |
-| **Task 4** | Loan Approval Prediction | ✅ Live | [Approve Loans](https://your-task4-app.streamlit.app) |
-| **Task 7** | Sales Forecasting | ✅ Live | [Forecast Sales](https://your-task7-app.streamlit.app) |
+| **Task 1** | Student Score Prediction | ✅ Live | [Predict Scores](https://students-score-predictor.streamlit.app/) |
+| **Task 2** | Customer Segmentation | ✅ Live | [Segment Customers](https://finscore.streamlit.app/) |
+| **Task 4** | Loan Approval Prediction | ✅ Live | [Approve Loans](https://approveyourloan.streamlit.app/) |
+| **Task 7** | Sales Forecasting | ✅ Live | [Forecast Sales](https://forcasting-sales.streamlit.app/) |
 
 ---
 
