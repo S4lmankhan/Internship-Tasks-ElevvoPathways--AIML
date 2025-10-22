@@ -1,11 +1,20 @@
+import sys
+
+# AGGRESSIVE FIX: Pre-map numpy._core BEFORE ANY imports
+import numpy
+if not hasattr(numpy, '_core'):
+    import numpy.core
+    numpy._core = numpy.core
+    sys.modules['numpy._core'] = numpy.core
+
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 from sklearn.preprocessing import StandardScaler
 import os
+import numpy as np
 
 st.set_page_config(page_title="Customer Segmentation", page_icon="🎯", layout="wide")
 
@@ -27,11 +36,16 @@ st.markdown("""
 @st.cache_resource
 def load_model_and_scaler():
     try:
-        kmeans = joblib.load('model/kmeans_model.pkl')
-        scaler = joblib.load('model/scaler.pkl')
+        from pathlib import Path
+        current_dir = Path(__file__).parent
+        kmeans = joblib.load(str(current_dir / 'model' / 'kmeans_model.pkl'))
+        scaler = joblib.load(str(current_dir / 'model' / 'scaler.pkl'))
         return kmeans, scaler
     except FileNotFoundError:
         st.error("⚠️ Model files not found! Please run the notebook first to generate kmeans_model.pkl and scaler.pkl")
+        return None, None
+    except Exception as e:
+        st.error(f"❌ Error loading models: {str(e)}")
         return None, None
 
 kmeans, scaler = load_model_and_scaler()
@@ -68,8 +82,7 @@ with tab1:
     
     if st.button("Predict Cluster", key="single_predict", use_container_width=True):
         customer_data = np.array([[income, spending_score]])
-        customer_scaled = scaler.transform(customer_data)
-        cluster = kmeans.predict(customer_scaled)[0]
+        cluster = kmeans.predict(customer_data)[0]
         
         st.success(f"✅ Customer assigned to **Cluster {cluster}**")
         
@@ -82,11 +95,10 @@ with tab1:
             st.metric("Assigned Cluster", cluster)
         
         cluster_names = {
-            0: "💼 Budget-Conscious",
-            1: "⭐ Premium Spenders",
-            2: "🎯 Mid-Range Buyers",
-            3: "🚀 High-Value Prospects",
-            4: "💰 Moderate Spenders"
+            0: "� Mid-Range Buyers (Medium Income & Spending)",
+            1: "💼 Budget-Conscious (Low Income & Low Spending)",
+            2: "🎯 High Income - Low Spenders (Savers)",
+            3: "⭐ Premium Customers (High Income & High Spending)"
         }
         
         st.info(f"**Segment Type:** {cluster_names.get(cluster, 'Unknown Segment')}")
@@ -151,7 +163,7 @@ with tab3:
     centers_df = pd.DataFrame(
         centers,
         columns=['Annual Income (k$)', 'Spending Score (1-100)'],
-        index=[f'Cluster {i}' for i in range(5)]
+        index=[f'Cluster {i}' for i in range(kmeans.n_clusters)]
     )
     st.dataframe(centers_df.round(2), use_container_width=True)
     

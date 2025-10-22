@@ -1,9 +1,18 @@
+import sys
+
+# AGGRESSIVE FIX: Pre-map numpy._core BEFORE ANY imports
+import numpy
+if not hasattr(numpy, '_core'):
+    import numpy.core
+    numpy._core = numpy.core
+    sys.modules['numpy._core'] = numpy.core
+
 import streamlit as st
 import pandas as pd
-import numpy as np
 import joblib
 import os
 from pathlib import Path
+import numpy as np
 
 # Set page config
 st.set_page_config(
@@ -65,8 +74,14 @@ def load_model_and_scaler():
         st.error("⚠️ Model files not found. Please ensure model/ directory contains the trained model.")
         st.stop()
     
-    model = joblib.load(model_path)
-    scaler = joblib.load(scaler_path)
+    try:
+        model = joblib.load(str(model_path))
+        scaler = joblib.load(str(scaler_path))
+    except Exception as e:
+        st.error(f"❌ Error loading model: {str(e)}")
+        st.info("Try refreshing the page or redeploying the app.")
+        st.stop()
+    
     return model, scaler
 
 model, scaler = load_model_and_scaler()

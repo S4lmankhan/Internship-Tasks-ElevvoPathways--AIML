@@ -1,13 +1,23 @@
+import warnings
+warnings.filterwarnings('ignore')
+
+import sys
+
+# AGGRESSIVE FIX: Pre-map numpy._core BEFORE ANY imports
+import numpy
+if not hasattr(numpy, '_core'):
+    import numpy.core
+    numpy._core = numpy.core
+    sys.modules['numpy._core'] = numpy.core
+
 import streamlit as st
 import pandas as pd
-import numpy as np
 import joblib
 import os
 from sklearn.preprocessing import LabelEncoder
 import matplotlib.pyplot as plt
 import seaborn as sns
-import warnings
-warnings.filterwarnings('ignore')
+import numpy as np
 
 # Page config
 st.set_page_config(page_title="Loan Approval", page_icon="💳", layout="wide")
@@ -18,15 +28,17 @@ st.markdown("""<style>.main {background-color: #f8f9fa;}</style>""", unsafe_allo
 @st.cache_resource
 def load_models():
     try:
-        lr = joblib.load('model/logistic_regression_model.pkl')
-        dt = joblib.load('model/decision_tree_model.pkl')
-        scaler = joblib.load('model/scaler.pkl')
-        le_dict = joblib.load('model/label_encoders.pkl')
-        le_target = joblib.load('model/target_encoder.pkl')
-        features = joblib.load('model/feature_columns.pkl')
+        from pathlib import Path
+        current_dir = Path(__file__).parent
+        lr = joblib.load(str(current_dir / 'model' / 'logistic_regression_model.pkl'))
+        dt = joblib.load(str(current_dir / 'model' / 'decision_tree_model.pkl'))
+        scaler = joblib.load(str(current_dir / 'model' / 'scaler.pkl'))
+        le_dict = joblib.load(str(current_dir / 'model' / 'label_encoders.pkl'))
+        le_target = joblib.load(str(current_dir / 'model' / 'target_encoder.pkl'))
+        features = joblib.load(str(current_dir / 'model' / 'feature_columns.pkl'))
         return {'lr': lr, 'dt': dt, 'scaler': scaler, 'le_dict': le_dict, 'le_target': le_target, 'features': features}
-    except:
-        st.error("❌ Models not found! Run notebook first.")
+    except Exception as e:
+        st.error(f"❌ Models not found! Error: {str(e)}")
         st.stop()
 
 models = load_models()

@@ -1,12 +1,21 @@
+import sys
+
+# AGGRESSIVE FIX: Pre-map numpy._core BEFORE ANY imports
+import numpy
+if not hasattr(numpy, '_core'):
+    import numpy.core
+    numpy._core = numpy.core
+    sys.modules['numpy._core'] = numpy.core
+
 import streamlit as st
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import joblib
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import plotly.express as px
+import numpy as np
 
 # Set page config
 st.set_page_config(
@@ -39,27 +48,36 @@ st.markdown("""
 def load_models():
     """Load all trained models"""
     try:
-        models = {
-            'Linear Regression': joblib.load('models/linear_regression_model.pkl'),
-            'Decision Tree': joblib.load('models/decision_tree_model.pkl'),
-            'Random Forest': joblib.load('models/random_forest_model.pkl'),
-            'XGBoost': joblib.load('models/xgboost_model.pkl'),
-            'LightGBM': joblib.load('models/lightgbm_model.pkl')
-        }
-        scaler = joblib.load('models/scaler.pkl')
-        feature_columns = joblib.load('models/feature_columns.pkl')
+        from pathlib import Path
+        current_dir = Path(__file__).parent
+        models = {}
+        model_files = ['linear_regression_model.pkl', 'decision_tree_model.pkl', 'random_forest_model.pkl', 'xgboost_model.pkl', 'lightgbm_model.pkl']
+        model_names = ['Linear Regression', 'Decision Tree', 'Random Forest', 'XGBoost', 'LightGBM']
+        
+        for name, fname in zip(model_names, model_files):
+            try:
+                models[name] = joblib.load(str(current_dir / 'model' / fname))
+            except FileNotFoundError:
+                continue
+        
+        scaler = joblib.load(str(current_dir / 'model' / 'scaler.pkl'))
+        feature_columns = joblib.load(str(current_dir / 'model' / 'feature_columns.pkl'))
         return models, scaler, feature_columns
     except Exception as e:
-        st.error(f"Error loading models: {e}")
+        st.error(f"❌ Error loading models: {e}")
         return None, None, None
 
 @st.cache_data
 def load_results():
     """Load model results"""
     try:
-        results_df = pd.read_csv('outputs/model_results.csv')
+        from pathlib import Path
+        current_dir = Path(__file__).parent
+        results_path = current_dir / 'outputs' / 'model_results.csv'
+        results_df = pd.read_csv(str(results_path))
         return results_df
-    except:
+    except Exception as e:
+        st.warning(f"⚠️ Could not load results file: {e}")
         return None
 
 # Load all resources
@@ -67,7 +85,11 @@ models, scaler, feature_columns = load_models()
 results_df = load_results()
 
 if models is None:
-    st.error("❌ Failed to load models. Please ensure model files are in the 'models/' directory.")
+    st.error("❌ Failed to load models. Please ensure model files are in the 'model/' directory.")
+    st.stop()
+
+if results_df is None or results_df.empty:
+    st.error("❌ Failed to load results. Please ensure outputs/model_results.csv exists.")
     st.stop()
 
 # Sidebar
@@ -98,11 +120,18 @@ if page == "🏠 Dashboard":
         st.metric("Total Models", len(models), "5 trained")
     
     with col2:
-        best_model = results_df.iloc[0]
-        st.metric("Best Model", best_model['Model'], f"R²: {best_model['R² Score']:.4f}")
+        if results_df is not None and not results_df.empty:
+            best_model = results_df.iloc[0]
+            st.metric("Best Model", best_model['Model'], f"R²: {best_model['R² Score']:.4f}")
+        else:
+            st.metric("Best Model", "N/A", "No data")
     
     with col3:
-        st.metric("Best RMSE", f"${best_model['RMSE']:.2f}", f"MAE: ${best_model['MAE']:.2f}")
+        if results_df is not None and not results_df.empty:
+            best_model = results_df.iloc[0]
+            st.metric("Best RMSE", f"${best_model['RMSE']:.2f}", f"MAE: ${best_model['MAE']:.2f}")
+        else:
+            st.metric("Best RMSE", "N/A", "No data")
     
     with col4:
         st.metric("Features", len(feature_columns), "17 engineered")
@@ -175,7 +204,9 @@ elif page == "📈 Forecasting":
     
     st.subheader("🔮 Make a Forecast")
     
-    col1, col2, col3 = st.columns(3)
+    st.info("💡 **Note**: This model uses Store ID, Item ID, and temporal features (day, month, quarter, year, weekend indicator) to predict sales.")
+    
+    col1, col2 = st.columns(2)
     
     with col1:
         forecast_days = st.slider("Days Ahead to Forecast", 1, 365, 30)
@@ -183,92 +214,58 @@ elif page == "📈 Forecasting":
     with col2:
         selected_model = st.selectbox("Select Model:", list(models.keys()))
     
-    with col3:
-        st.metric("Selected Model", selected_model)
-    
     st.markdown("---")
     
+    # Store and Item inputs
+    st.subheader("🏪 Store & Item Information")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        store_id = st.number_input("Store ID", min_value=1, max_value=100, value=1, step=1)
+    
+    with col2:
+        item_id = st.number_input("Item ID", min_value=1, max_value=100, value=1, step=1)
+    
     # Temporal features for forecasting
-    st.subheader("📅 Temporal Features for Forecast Period")
+    st.subheader("📅 Forecast Start Date")
     
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        start_day = st.number_input("Start Day of Month", 1, 31, 1)
-    
-    with col2:
-        start_month = st.number_input("Start Month", 1, 12, 1)
-    
-    with col3:
-        start_quarter = (start_month - 1) // 3 + 1
-        st.metric("Quarter", start_quarter)
-    
-    # Historical context
-    st.subheader("📊 Historical Context Values - Lag Features")
-    
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2 = st.columns(2)
     
     with col1:
-        lag_1_sales = st.number_input("Sales Lag 1 Day ($)", value=100000.0, step=1000.0)
+        start_month = st.number_input("Start Month", 1, 12, datetime.now().month)
     
     with col2:
-        lag_7_sales = st.number_input("Sales Lag 7 Days ($)", value=100000.0, step=1000.0)
+        start_day = st.number_input("Start Day of Month", 1, 31, datetime.now().day)
     
-    with col3:
-        lag_14_sales = st.number_input("Sales Lag 14 Days ($)", value=100000.0, step=1000.0)
-    
-    with col4:
-        lag_30_sales = st.number_input("Sales Lag 30 Days ($)", value=100000.0, step=1000.0)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        ma_7 = st.number_input("7-Day Moving Average ($)", value=100000.0, step=1000.0)
-    
-    with col2:
-        ma_14 = st.number_input("14-Day Moving Average ($)", value=100000.0, step=1000.0)
-    
-    with col3:
-        ma_30 = st.number_input("30-Day Moving Average ($)", value=100000.0, step=1000.0)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        std_7 = st.number_input("7-Day Std Dev ($)", value=5000.0, step=500.0)
-    
-    with col2:
-        std_14 = st.number_input("14-Day Std Dev ($)", value=5000.0, step=500.0)
-    
-    with col3:
-        std_30 = st.number_input("30-Day Std Dev ($)", value=5000.0, step=500.0)
+    st.markdown("---")
     
     # Generate forecast button
     if st.button("🚀 Generate Forecast", use_container_width=True, key="forecast_btn"):
         try:
-            # Create forecast input
+            # Create forecast input based on actual model features
+            # Features: ['Store', 'Item', 'DayOfWeek', 'Month', 'Quarter', 'Year', 'IsWeekend']
             forecast_inputs = []
             
+            # Create start date
+            current_year = datetime.now().year
+            try:
+                start_date = datetime(current_year, start_month, start_day)
+            except ValueError:
+                # Handle invalid dates (e.g., Feb 30)
+                start_date = datetime(current_year, start_month, 1)
+            
             for day_offset in range(forecast_days):
-                current_date = datetime.now() + timedelta(days=day_offset)
+                current_date = start_date + timedelta(days=day_offset)
                 
                 input_dict = {
-                    'Day': current_date.day,
-                    'Month': current_date.month,
+                    'Store': store_id,
+                    'Item': item_id,
                     'DayOfWeek': current_date.weekday(),
+                    'Month': current_date.month,
                     'Quarter': (current_date.month - 1) // 3 + 1,
-                    'Week': current_date.isocalendar()[1],
-                    'DayOfYear': current_date.timetuple().tm_yday,
-                    'IsWeekend': 1 if current_date.weekday() >= 5 else 0,
-                    'Sales_Lag_1': lag_1_sales,
-                    'Sales_Lag_7': lag_7_sales,
-                    'Sales_Lag_14': lag_14_sales,
-                    'Sales_Lag_30': lag_30_sales,
-                    'Sales_MA_7': ma_7,
-                    'Sales_MA_14': ma_14,
-                    'Sales_MA_30': ma_30,
-                    'Sales_Std_7': std_7,
-                    'Sales_Std_14': std_14,
-                    'Sales_Std_30': std_30
+                    'Year': current_date.year,
+                    'IsWeekend': 1 if current_date.weekday() >= 5 else 0
                 }
                 
                 forecast_inputs.append(input_dict)
@@ -285,13 +282,17 @@ elif page == "📈 Forecasting":
             model = models[selected_model]
             predictions = model.predict(forecast_scaled)
             
-            # Create results dataframe
+            # Create results dataframe with dates
+            forecast_dates = [start_date + timedelta(days=i) for i in range(forecast_days)]
+            
             forecast_results = pd.DataFrame({
-                'Date': [datetime.now() + timedelta(days=i) for i in range(forecast_days)],
+                'Date': forecast_dates,
                 'Forecast': predictions,
-                'Day': forecast_df['Day'],
+                'Store': forecast_df['Store'],
+                'Item': forecast_df['Item'],
                 'Month': forecast_df['Month'],
-                'DayOfWeek': forecast_df['DayOfWeek']
+                'DayOfWeek': forecast_df['DayOfWeek'],
+                'IsWeekend': forecast_df['IsWeekend']
             })
             
             st.success(f"✅ Forecast generated for {forecast_days} days ahead!")
@@ -359,10 +360,14 @@ elif page == "📊 Model Insights":
     
     st.subheader("🏆 Best Model Performance")
     
-    best_model_name = results_df.iloc[0]['Model']
-    best_r2 = results_df.iloc[0]['R² Score']
-    best_rmse = results_df.iloc[0]['RMSE']
-    best_mae = results_df.iloc[0]['MAE']
+    if results_df is not None and not results_df.empty:
+        best_model_name = results_df.iloc[0]['Model']
+        best_r2 = results_df.iloc[0]['R² Score']
+        best_rmse = results_df.iloc[0]['RMSE']
+        best_mae = results_df.iloc[0]['MAE']
+    else:
+        st.error("❌ Model results not available")
+        st.stop()
     
     col1, col2, col3, col4 = st.columns(4)
     
